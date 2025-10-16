@@ -1,0 +1,99 @@
+DATA:
+  MAX_SAMPLE_INTERVAL: 200
+  MAX_SEQ_LENGTH: 40  # For NLP tokenizer
+  MEAN:
+  - 0.485
+  - 0.456
+  - 0.406
+  SEARCH:
+    CENTER_JITTER: 5.5  # UPGRADED: More aggressive jitter (was 4.5)
+    FACTOR: 5.0
+    SCALE_JITTER: 0.6  # UPGRADED: More scale variation (was 0.5)
+    SIZE: 320
+  STD:
+  - 0.229
+  - 0.224
+  - 0.225
+  TEMPLATE:
+    CENTER_JITTER: 1.0  # UPGRADED: Add template jitter (was 0)
+    FACTOR: 2.0
+    SCALE_JITTER: 0.1  # UPGRADED: Add template scale jitter (was 0)
+    SIZE: 128
+  TRAIN:
+    DATASETS_NAME:
+      - UniMod1K
+    DATASETS_RATIO:
+      - 1
+    SAMPLE_PER_EPOCH: 30000
+    # NEW: Long sequence training config
+    LONG_SEQ_RATIO: 0.3  # 30% long-seq, 70% short-seq
+    LONG_SEQ_LENGTH: 4  # Sample 4 consecutive frames
+
+MODEL:
+  PRETRAINED: '/root/autodl-tmp/STARKS_ep0500.pth.tar'
+  INIT: 'xavier'  # Weight initialization method
+  BACKBONE:
+    DILATION: false
+    OUTPUT_LAYERS:
+    - layer3
+    TYPE: resnet50
+  HEAD_TYPE: CORNER
+  HIDDEN_DIM: 256
+  NUM_OBJECT_QUERIES: 1
+  POSITION_EMBEDDING: sine
+  PREDICT_MASK: false
+  TRANSFORMER:
+    DEC_LAYERS: 6
+    DIM_FEEDFORWARD: 2048
+    DIVIDE_NORM: false
+    DROPOUT: 0.1
+    ENC_LAYERS: 6
+    NHEADS: 8
+    PRE_NORM: false
+  LANGUAGE:
+    IMPLEMENT: 'pytorch'
+    TYPE: 'bert-base-uncased'
+    PATH: '/root/autodl-tmp/bert/bert-base-uncased.tar.gz'
+    VOCAB_PATH: '/root/autodl-tmp/bert/bert-base-uncased-vocab.txt'
+    BERT:
+      LR: 0.0001  # Language branch LR
+      ENC_NUM: 12
+      HIDDEN_DIM: 256
+      MAX_QUERY_LEN: 40
+    
+TRAIN:
+  BACKBONE_MULTIPLIER: 0.15  # UPGRADED: Higher backbone LR (was 0.1)
+  BATCH_SIZE: 20  # Reduce to 12-14 if OOM with long-seq
+  DEEP_SUPERVISION: false
+  EPOCH: 240
+  FREEZE_BACKBONE_BN: true
+  FREEZE_LAYERS:
+  - conv1
+  - layer1
+  GIOU_WEIGHT: 2.5  # UPGRADED: Higher GIoU weight (was 2.0)
+  GRAD_CLIP_NORM: 0.1
+  L1_WEIGHT: 4.0  # ADJUSTED: Lower L1 weight to balance with GIoU
+  LR: 0.00002  # UPGRADED: Higher base LR (was 0.00001)
+  LR_DROP_EPOCH: 240
+  NUM_WORKER: 12
+  OPTIMIZER: ADAMW
+  PRINT_INTERVAL: 50
+  SCHEDULER:
+    TYPE: Mstep  # UPGRADED: Multi-step scheduler
+    MILESTONES: [80, 120, 160, 200]  # Drop LR at these epochs
+    GAMMA: 0.1  # LR *= 0.1 at each milestone
+  VAL_EPOCH_INTERVAL: 20
+  WEIGHT_DECAY: 0.0002  # UPGRADED: Higher weight decay (was 0.0001)
+
+  # NEW: Data augmentation enhancements
+  COLOR_JITTER: true  # Enable color jittering
+  RANDOM_FLIP: true  # Enable random horizontal flip
+  GRAY_PROB: 0.05  # 5% chance to convert to grayscale
+
+TEST:
+  EPOCH: 240
+  SEARCH_FACTOR: 5.0
+  SEARCH_SIZE: 320
+  TEMPLATE_FACTOR: 2.0
+  TEMPLATE_SIZE: 128
+

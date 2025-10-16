@@ -125,7 +125,9 @@ class Tracker:
             out = {}
 
         prev_output = OrderedDict(out)
-        init_default = {'target_bbox': [1],
+        # init_default = {'target_bbox': [1],
+        #                 'time': time.time() - start_time}
+        init_default = {'target_bbox': init_info['init_bbox'],
                         'time': time.time() - start_time}
         if tracker.params.save_all_boxes:
             init_default['all_boxes'] = out['all_boxes']

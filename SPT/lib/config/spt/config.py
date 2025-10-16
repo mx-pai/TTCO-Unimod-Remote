@@ -61,10 +61,16 @@ cfg.TRAIN.FREEZE_LAYERS = ['conv1', 'layer1']
 cfg.TRAIN.PRINT_INTERVAL = 50
 cfg.TRAIN.VAL_EPOCH_INTERVAL = 20
 cfg.TRAIN.GRAD_CLIP_NORM = 0.1
+# Data augmentation options
+cfg.TRAIN.COLOR_JITTER = False  # Enable color jittering
+cfg.TRAIN.RANDOM_FLIP = False   # Enable random horizontal flip
+cfg.TRAIN.GRAY_PROB = 0.0       # Probability to convert to grayscale
 # TRAIN.SCHEDULER
 cfg.TRAIN.SCHEDULER = edict()
 cfg.TRAIN.SCHEDULER.TYPE = "step"
 cfg.TRAIN.SCHEDULER.DECAY_RATE = 0.1
+cfg.TRAIN.SCHEDULER.MILESTONES = [80, 120, 160]  # For Mstep scheduler
+cfg.TRAIN.SCHEDULER.GAMMA = 0.1  # For Mstep scheduler
 
 # DATA
 cfg.DATA = edict()
@@ -77,6 +83,9 @@ cfg.DATA.TRAIN = edict()
 cfg.DATA.TRAIN.DATASETS_NAME = ["UniMod1K"]
 cfg.DATA.TRAIN.DATASETS_RATIO = [1]
 cfg.DATA.TRAIN.SAMPLE_PER_EPOCH = 30000 #60000
+# Long-sequence training (for anti-drift)
+cfg.DATA.TRAIN.LONG_SEQ_RATIO = 0.0  # Default 0 = disabled
+cfg.DATA.TRAIN.LONG_SEQ_LENGTH = 4  # Number of consecutive frames
 # DATA.VAL
 cfg.DATA.VAL = edict()
 cfg.DATA.VAL.DATASETS_NAME = ["UniMod1K"]

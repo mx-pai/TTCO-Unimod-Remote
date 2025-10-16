@@ -1,0 +1,18 @@
+# 忽略模型文件
+checkpoints_improved/
+checkpoints/
+
+# 忽略软链接数据
+SPT/data/
+data/
+
+# 忽略临时文件、日志等
+*.log
+*.tmp
+*.ckpt
+*.pth
+*.pt
+*.onnx
+__pycache__/
+.ipynb_checkpoints/
+

@@ -27,12 +27,16 @@ def _save_tracker_output(seq: Sequence, tracker: Tracker, output: dict):
     if not os.path.exists(base_results_path):
         os.makedirs(base_results_path)
 
+    # Use a safe base name for files to avoid nested path issues when seq.name contains '/'
+    seq_base_name = os.path.basename(seq.name)
+
     def save_bb(file, data):
-        # tracked_bb = np.array(data).astype(int)
-        # np.savetxt(file, tracked_bb, delimiter='\t', fmt='%d')
+        # FIX: Convert to integer pixel coordinates for standard format
         with open(file, 'w') as f:
             for x in data:
-                f.write(','.join([str(i) for i in x]) + '\n')
+                # Round to int for pixel coordinates
+                bbox_int = [int(round(float(i))) for i in x]
+                f.write(','.join([str(i) for i in bbox_int]) + '\n')
 
     def save_time(file, data):
         exec_times = np.array(data).astype(float)
@@ -62,11 +66,11 @@ def _save_tracker_output(seq: Sequence, tracker: Tracker, output: dict):
                 data_dict = _convert_dict(data)
 
                 for obj_id, d in data_dict.items():
-                    bbox_file = '{}/{}_001.txt'.format(base_results_path, seq.name)
+                    bbox_file = '{}/{}_001.txt'.format(base_results_path, seq_base_name)
                     save_bb(bbox_file, d)
             else:
                 # Single-object mode
-                bbox_file = '{}/{}_001.txt'.format(base_results_path, seq.name)
+                bbox_file = '{}/{}_001.txt'.format(base_results_path, seq_base_name)
                 save_bb(bbox_file, data)
 
         if key == 'all_boxes':
@@ -102,17 +106,17 @@ def _save_tracker_output(seq: Sequence, tracker: Tracker, output: dict):
                     timings_file = '{}_{}_time.txt'.format(base_results_path, obj_id)
                     save_time(timings_file, d)
             else:
-                timings_file = '{}/{}_001_time.value'.format(base_results_path, seq.name)
+                timings_file = '{}/{}_001_time.value'.format(base_results_path, seq_base_name)
                 save_time(timings_file, data)
 
         elif key == 'confidence':
             if isinstance(data[0], dict):
                 data_dict = _convert_dict(data)
                 for obj_id, d in data_dict.items():
-                    confidence_file = '{}/{}_{}_001_confidence.value'.format(base_results_path, seq.name, obj_id)
+                    confidence_file = '{}/{}_{}_001_confidence.value'.format(base_results_path, seq_base_name, obj_id)
                     save_time(confidence_file, d)
             else:
-                confidence_file = '{}/{}_001_confidence.value'.format(base_results_path, seq.name)
+                confidence_file = '{}/{}_001_confidence.value'.format(base_results_path, seq_base_name)
                 save_time(confidence_file, data)
 
 
@@ -133,7 +137,7 @@ def run_sequence(seq: Sequence, tracker: Tracker, debug=False, num_gpu=8):
                 base_results_path = os.path.join(tracker.results_dir, seq.dataset, seq.name)
                 bbox_file = '{}.txt'.format(base_results_path)
             else:
-                bbox_file = '{}/{}/{}_001.txt'.format(tracker.results_dir, seq.name, seq.name)
+                bbox_file = '{}/{}/{}_001.txt'.format(tracker.results_dir, seq.name, os.path.basename(seq.name))
             return os.path.isfile(bbox_file)
         else:
             bbox_files = ['{}/{}_{}.txt'.format(tracker.results_dir, seq.name, obj_id) for obj_id in seq.object_ids]

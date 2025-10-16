@@ -63,7 +63,10 @@ class SPT(BaseTracker):
         if self.save_all_boxes:
             '''save all predicted boxes'''
             all_boxes_save = info['init_bbox'] * self.cfg.MODEL.NUM_OBJECT_QUERIES
-            return {"all_boxes": all_boxes_save}
+            return {"target_bbox": info['init_bbox'], "all_boxes": all_boxes_save}
+        else:
+            # FIX: Always return target_bbox to avoid default [1] placeholder
+            return {"target_bbox": info['init_bbox']}
 
     def track(self, image, info: dict = None):
         H, W, _ = image.shape
@@ -89,8 +92,17 @@ class SPT(BaseTracker):
         pred_boxes = out_dict['pred_boxes'].view(-1, 4)
         # Baseline: Take the mean of all pred boxes as the final result
         pred_box = (pred_boxes.mean(dim=0) * self.params.search_size / resize_factor).tolist()  # (cx, cy, w, h) [0,1]
+
+        # ENHANCE: Sanity check for predicted box
+        # If width or height is too small or too large, use previous state
+        if pred_box[2] < 5 or pred_box[3] < 5 or pred_box[2] > H * 0.8 or pred_box[3] > W * 0.8:
+            # Abnormal prediction, keep previous state
+            mapped_box = self.state
+        else:
+            mapped_box = self.map_box_back(pred_box, resize_factor)
+
         # get the final box result
-        self.state = clip_box(self.map_box_back(pred_box, resize_factor), H, W, margin=10)
+        self.state = clip_box(mapped_box, H, W, margin=10)
 
         # for debug
         if self.debug:

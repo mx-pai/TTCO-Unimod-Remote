@@ -18,7 +18,7 @@ class UniMod1KDataset(BaseDataset):
         nz = 8
         start_frame = 1
 
-        anno_path = '{}/{}/groundtruth.txt'.format(self.base_path, sequence_name)
+        anno_path = '{}/{}/groundtruth_rect.txt'.format(self.base_path, sequence_name)
         try:
             ground_truth_rect = np.loadtxt(str(anno_path), dtype=np.float64)
         except:
