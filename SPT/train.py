@@ -5,7 +5,6 @@ Unified training entrypoint for the SPT tracker.
 This script centralises data-loader construction (including optional long-sequence
 sampling), model instantiation, optimisation setup, and checkpoint housekeeping.
 """
-from __future__ import annotations
 
 import argparse
 import glob
