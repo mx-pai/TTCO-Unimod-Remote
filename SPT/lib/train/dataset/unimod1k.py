@@ -54,11 +54,21 @@ class UniMod1K(BaseVideoDataset):
         self.root = root
         self.dtype = dtype
         self.split_file = split_file
+        self._sequence_map = self._scan_sequences()
         self.sequence_list = self._build_sequence_list()
 
         self.seq_per_class, self.class_list = self._build_class_list()
         self.class_list.sort()
         self.class_to_id = {cls_name: cls_id for cls_id, cls_name in enumerate(self.class_list)}
+
+    def _scan_sequences(self):
+        seq_map = {}
+        for dirpath, dirnames, filenames in os.walk(self.root):
+            if 'groundtruth_rect.txt' in filenames:
+                rel_path = os.path.relpath(dirpath, self.root).replace('\\', '/')
+                seq_name = os.path.basename(dirpath)
+                seq_map.setdefault(seq_name, []).append(rel_path)
+        return seq_map
 
     def _build_sequence_list(self):
         split_path = self.split_file
@@ -68,16 +78,34 @@ class UniMod1K(BaseVideoDataset):
         if not os.path.isabs(split_path):
             split_path = os.path.join(self.root, split_path)
 
+        sequence_list = []
+        default_list = []
         if os.path.isfile(split_path):
-            sequence_list = pandas.read_csv(split_path, header=None, squeeze=True).values.tolist()
-        else:
-            # Fallback: auto-discover sequences under root
-            sequence_list = []
-            for dirpath, dirnames, filenames in os.walk(self.root):
-                if 'groundtruth_rect.txt' in filenames:
-                    rel_path = os.path.relpath(dirpath, self.root)
-                    sequence_list.append(rel_path.replace('\\', '/'))
-            sequence_list.sort()
+            default_list = pandas.read_csv(split_path, header=None, squeeze=True).values.tolist()
+
+        missing = []
+        for seq_name in default_list:
+            rel_path = seq_name
+            abs_path = os.path.join(self.root, rel_path)
+            if not os.path.isdir(abs_path):
+                candidates = self._sequence_map.get(seq_name, [])
+                if candidates:
+                    rel_path = candidates[0]
+                else:
+                    missing.append(seq_name)
+                    continue
+            sequence_list.append(rel_path.replace('\\', '/'))
+
+        for seq_name, paths in self._sequence_map.items():
+            for rel_path in paths:
+                rel_path = rel_path.replace('\\', '/')
+                if rel_path not in sequence_list:
+                    sequence_list.append(rel_path)
+
+        if missing:
+            print(f"[UniMod1K] Warning: skipped sequences not found under data root: {missing}")
+
+        sequence_list.sort()
 
         return sequence_list
 
