@@ -97,12 +97,14 @@ cfg.DATA.SEARCH.SIZE = 320
 cfg.DATA.SEARCH.FACTOR = 5.0
 cfg.DATA.SEARCH.CENTER_JITTER = 4.5
 cfg.DATA.SEARCH.SCALE_JITTER = 0.5
+cfg.DATA.SEARCH.NUMBER = 1
 # DATA.TEMPLATE
 cfg.DATA.TEMPLATE = edict()
 cfg.DATA.TEMPLATE.SIZE = 128
 cfg.DATA.TEMPLATE.FACTOR = 2.0
 cfg.DATA.TEMPLATE.CENTER_JITTER = 0
 cfg.DATA.TEMPLATE.SCALE_JITTER = 0
+cfg.DATA.TEMPLATE.NUMBER = 1
 
 # TEST
 cfg.TEST = edict()
@@ -151,5 +153,4 @@ def update_config_from_file(filename):
     with open(filename) as f:
         exp_config = edict(yaml.safe_load(f))
         _update_config(cfg, exp_config)
-
 
