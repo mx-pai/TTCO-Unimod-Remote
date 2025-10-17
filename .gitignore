@@ -5,6 +5,7 @@ checkpoints/
 # 忽略软链接数据
 SPT/data/
 data/
+!SPT/lib/train/data/
 
 # 忽略临时文件、日志等
 *.log
@@ -15,4 +16,3 @@ data/
 *.onnx
 __pycache__/
 .ipynb_checkpoints/
-
