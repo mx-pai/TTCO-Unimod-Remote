@@ -13,8 +13,10 @@ import cv2
 
 from lib.train.dataset.depth_utils import get_rgbd_frame
 
+
 class UniMod1K(BaseVideoDataset):
-    def __init__(self, root=None, dtype='rgbcolormap', image_loader=jpeg4py_loader):
+    def __init__(self, root=None, nlp_root=None, dtype='rgbcolormap', image_loader=jpeg4py_loader,
+                 split_file=None):
         """
         args:
 
@@ -31,11 +33,21 @@ class UniMod1K(BaseVideoDataset):
                         if colormap, it returns the colormap by cv2,
                         if depth, it returns [depth, depth, depth]
         """
-        root = env_settings().unimod1k_dir if root is None else root
+        env = env_settings()
+        if root is None:
+            root = getattr(env, 'unimod1k_dir', None)
+        if root is None:
+            raise ValueError("UniMod1K dataset root not provided. "
+                             "Use --data-root or set env_settings().unimod1k_dir.")
+
+        if nlp_root is None:
+            nlp_root = getattr(env, 'unimod1k_dir_nlp', root)
+
         super().__init__('UniMod1K', root, image_loader)
-        self.root_nlp = env_settings().unimod1k_dir_nlp
+        self.root_nlp = nlp_root
         self.root = root
         self.dtype = dtype
+        self.split_file = split_file
         self.sequence_list = self._build_sequence_list()
 
         self.seq_per_class, self.class_list = self._build_class_list()
@@ -43,10 +55,23 @@ class UniMod1K(BaseVideoDataset):
         self.class_to_id = {cls_name: cls_id for cls_id, cls_name in enumerate(self.class_list)}
 
     def _build_sequence_list(self):
+        split_path = self.split_file
+        if split_path is None:
+            ltr_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..')
+            split_path = os.path.join(ltr_path, 'data_specs', 'unimod1k_train_split.txt')
+        if not os.path.isabs(split_path):
+            split_path = os.path.join(self.root, split_path)
 
-        ltr_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..')
-        file_path = os.path.join(ltr_path, 'data_specs', 'unimod1k_train_split.txt')
-        sequence_list = pandas.read_csv(file_path, header=None, squeeze=True).values.tolist()
+        if os.path.isfile(split_path):
+            sequence_list = pandas.read_csv(split_path, header=None, squeeze=True).values.tolist()
+        else:
+            # Fallback: auto-discover sequences under root
+            sequence_list = []
+            for dirpath, dirnames, filenames in os.walk(self.root):
+                if 'groundtruth_rect.txt' in filenames:
+                    rel_path = os.path.relpath(dirpath, self.root)
+                    sequence_list.append(rel_path.replace('\\', '/'))
+            sequence_list.sort()
 
         return sequence_list
 

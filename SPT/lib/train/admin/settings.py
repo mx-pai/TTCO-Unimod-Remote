@@ -9,5 +9,6 @@ class Settings:
     def set_default(self):
         self.env = env_settings()
         self.use_gpu = True
-
+        self.data_root = None
+        self.nlp_root = None
 

@@ -10,6 +10,7 @@ DATA:
     FACTOR: 5.0
     SCALE_JITTER: 0.6  # UPGRADED: More scale variation (was 0.5)
     SIZE: 320
+    NUMBER: 4
   STD:
   - 0.229
   - 0.224
@@ -19,12 +20,14 @@ DATA:
     FACTOR: 2.0
     SCALE_JITTER: 0.1  # UPGRADED: Add template scale jitter (was 0)
     SIZE: 128
+    NUMBER: 1
   TRAIN:
     DATASETS_NAME:
       - UniMod1K
     DATASETS_RATIO:
       - 1
     SAMPLE_PER_EPOCH: 30000
+    # SPLIT_FILE: train_split.txt  # Optional custom split relative to data root or absolute path
     # NEW: Long sequence training config
     LONG_SEQ_RATIO: 0.3  # 30% long-seq, 70% short-seq
     LONG_SEQ_LENGTH: 4  # Sample 4 consecutive frames
@@ -96,4 +99,3 @@ TEST:
   SEARCH_SIZE: 320
   TEMPLATE_FACTOR: 2.0
   TEMPLATE_SIZE: 128
-

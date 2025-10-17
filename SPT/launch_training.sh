@@ -9,7 +9,7 @@
 # 4. Monitors GPU usage and training progress
 #
 # Usage:
-#   bash launch_training.sh [--config CONFIG_NAME] [--gpus N] [--auto-eval]
+#   bash launch_training.sh [--config CONFIG_NAME] [--gpus N] [--data-root PATH]
 #===============================================================================
 
 set -e  # Exit on error
@@ -23,9 +23,9 @@ NC='\033[0m' # No Color
 # Default settings
 CONFIG="unimod1k_improved"
 NUM_GPUS=1
-AUTO_EVAL=false
 KEEP_CKPT=5
 SAVE_DIR="./checkpoints_improved"
+DATA_ROOT=""
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -38,12 +38,12 @@ while [[ $# -gt 0 ]]; do
             NUM_GPUS="$2"
             shift 2
             ;;
-        --auto-eval)
-            AUTO_EVAL=true
-            shift
-            ;;
         --keep-ckpt)
             KEEP_CKPT="$2"
+            shift 2
+            ;;
+        --data-root)
+            DATA_ROOT="$2"
             shift 2
             ;;
         --save-dir)
@@ -243,17 +243,18 @@ echo -e "${GREEN}TRAINING CONFIGURATION${NC}"
 echo -e "${GREEN}=================================${NC}"
 echo -e "Config: ${CONFIG}"
 echo -e "Save dir: ${SAVE_DIR}"
-echo -e "Auto-eval: ${AUTO_EVAL}"
+if [ -n "$DATA_ROOT" ]; then
+    echo -e "Data root: ${DATA_ROOT}"
+fi
 echo -e "Keep checkpoints: ${KEEP_CKPT}"
 echo -e "GPUs: ${NUM_GPUS}"
 echo -e "${GREEN}=================================${NC}"
 echo ""
 
 # Build command
-CMD="python train_improved.py --config ${CONFIG} --save_dir ${SAVE_DIR} --keep_checkpoints ${KEEP_CKPT}"
-
-if [ "$AUTO_EVAL" = true ]; then
-    CMD="${CMD} --auto_eval --eval_epochs 40 80 120 160 200 240"
+CMD="python train.py --config ${CONFIG} --save-dir ${SAVE_DIR} --keep-checkpoints ${KEEP_CKPT}"
+if [ -n "$DATA_ROOT" ]; then
+    CMD="${CMD} --data-root ${DATA_ROOT}"
 fi
 
 # Create log file with timestamp
@@ -285,4 +286,3 @@ else
     echo -e "Check log: ${LOG_FILE}"
     exit 1
 fi
-

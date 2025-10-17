@@ -1,4 +1,4 @@
-import os.path
+import os
 
 import numpy as np
 from lib.test.evaluation.data import Sequence, BaseDataset, SequenceList
@@ -7,7 +7,12 @@ from lib.test.utils.load_text import load_text
 class UniMod1KDataset(BaseDataset):
     def __init__(self):
         super().__init__()
-        self.base_path = self.env_settings.unimod1k_path
+        env_root = getattr(self.env_settings, 'unimod1k_path', '')
+        override_root = os.environ.get('UNIMOD1K_DATA_ROOT')
+        self.base_path = os.path.abspath(override_root or env_root)
+        if not self.base_path:
+            raise ValueError("UniMod1K dataset path not specified. "
+                             "Set UNIMOD1K_DATA_ROOT or update lib/test/evaluation/local.py.")
         self.sequence_list = self._get_sequence_list()
 
     def get_sequence_list(self):
@@ -60,6 +65,16 @@ class UniMod1KDataset(BaseDataset):
 
     def _get_sequence_list(self):
         list_file = os.path.join(self.base_path, 'list.txt')
-        with open(list_file, 'r') as f:
-            sequence_list = f.read().splitlines()
+        if os.path.isfile(list_file):
+            with open(list_file, 'r') as f:
+                sequence_list = f.read().splitlines()
+            return sequence_list
+
+        # Fallback: auto-discover sequences by scanning for groundtruth files
+        sequence_list = []
+        for root, dirs, files in os.walk(self.base_path):
+            if 'groundtruth_rect.txt' in files:
+                rel_path = os.path.relpath(root, self.base_path)
+                sequence_list.append(rel_path.replace('\\', '/'))
+        sequence_list.sort()
         return sequence_list

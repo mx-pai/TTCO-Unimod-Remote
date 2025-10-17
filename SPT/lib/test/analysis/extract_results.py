@@ -128,18 +128,31 @@ def extract_results(trackers, dataset, report_name, skip_missing_seq=False, plot
         anno_bb = torch.tensor(seq.ground_truth_rect)
         target_visible = torch.tensor(seq.target_visible, dtype=torch.uint8) if seq.target_visible is not None else None
         for trk_id, trk in enumerate(trackers):
-            # Load results
-            base_results_path = '{}/{}'.format(trk.results_dir, seq.name)
-            results_path = '{}.txt'.format(base_results_path)
+            seq_base_name = os.path.basename(seq.name)
 
-            if os.path.isfile(results_path):
-                pred_bb = torch.tensor(load_text(str(results_path), delimiter=('\t', ','), dtype=np.float64))
+            # Load results
+            base_results_path = os.path.join(trk.results_dir, seq.name)
+            candidate_paths = []
+
+            if seq.dataset in ['trackingnet', 'got10k']:
+                candidate_paths.append(f"{base_results_path}.txt")
             else:
+                candidate_paths.append(os.path.join(base_results_path, f"{seq_base_name}_001.txt"))
+                candidate_paths.append(f"{base_results_path}.txt")
+
+            results_path = None
+            for cand in candidate_paths:
+                if os.path.isfile(cand):
+                    results_path = cand
+                    break
+
+            if results_path is None:
                 if skip_missing_seq:
                     valid_sequence[seq_id] = 0
                     break
-                else:
-                    raise Exception('Result not found. {}'.format(results_path))
+                raise Exception('Result not found. {}'.format(candidate_paths[0]))
+
+            pred_bb = torch.tensor(load_text(str(results_path), delimiter=('\t', ','), dtype=np.float64))
 
             # Calculate measures
             err_overlap, err_center, err_center_normalized, valid_frame = calc_seq_err_robust(

@@ -49,18 +49,32 @@ Download the pretrained [Stark-s model](https://drive.google.com/drive/folders/1
 and put it under `$PROJECT_ROOT$/pretrained_models/`. 
 Set the MODEL.PRETRAINED path in ./experiments/spt/unimod1k.yaml.
 
-Training with multiple GPUs using DDP (4 RTX3090Ti with batch size of 16)
+Training entry point
 ```
 export PYTHONPATH=/path/to/SPT:$PYTHONPATH
-python -m torch.distributed.launch --nproc_per_node=4 ./lib/train/run_training.py  
-```
-or using single GPU:
-```
-python ./lib/train/run_training.py  
+python train.py --config unimod1k_improved --save-dir ./outputs --print-config
 ```
 
+Useful flags
+- `--data-root /path/to/UniMod1K`: point to your local UniMod1K dataset root (no need to edit `local.py`).
+- `--nlp-root /path/to/UniMod1K_nlp`: override the NLP annotation path (defaults to `--data-root`).
+- `--resume <checkpoint>`: resume from a specific checkpoint (otherwise the latest one in `./outputs/checkpoints/train/spt/<config>` is used).
+- `--keep-checkpoints N`: retain only the latest `N` checkpoints per run (default 5).
+- `--no-amp`: disable AMP even if the config enables it.
+- `--local-rank`: torch.distributed local rank (set automatically when launching with `torchrun`).
+
+Distributed training
+```
+export PYTHONPATH=/path/to/SPT:$PYTHONPATH
+torchrun --nproc_per_node=4 train.py --config unimod1k_improved --save-dir ./outputs
+```
+
+Long-sequence training can be enabled by configuring `DATA.TRAIN.LONG_SEQ_RATIO > 0` and setting
+`DATA.TRAIN.LONG_SEQ_LENGTH` (make sure `DATA.SEARCH.NUMBER` matches the long sequence length).
+
 ### Test
-Edit ./lib/test/evaluation/local.py to set the test set path, then run
+Set the test set path either by editing `./lib/test/evaluation/local.py` or exporting
+`UNIMOD1K_DATA_ROOT=/path/to/UniMod1K` before running
 ```
 python ./tracking/test.py
 ```
