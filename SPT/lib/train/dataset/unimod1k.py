@@ -39,9 +39,15 @@ class UniMod1K(BaseVideoDataset):
         if root is None:
             raise ValueError("UniMod1K dataset root not provided. "
                              "Use --data-root or set env_settings().unimod1k_dir.")
+        root = os.path.abspath(root)
+        if not os.path.isdir(root):
+            raise FileNotFoundError(f"UniMod1K dataset root not found: {root}")
 
         if nlp_root is None:
             nlp_root = getattr(env, 'unimod1k_dir_nlp', root)
+        nlp_root = os.path.abspath(nlp_root)
+        if not os.path.isdir(nlp_root):
+            raise FileNotFoundError(f"UniMod1K NLP root not found: {nlp_root}")
 
         super().__init__('UniMod1K', root, image_loader)
         self.root_nlp = nlp_root
